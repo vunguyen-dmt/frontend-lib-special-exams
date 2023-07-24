@@ -37,7 +37,7 @@ const StartTimedExamInstructions = () => {
           values={{ examDuration }}
         />
       </p>
-      <Alert variant="danger" dismissible icon={Info}>
+      <Alert variant="danger" dismissible={false} icon={Info}>
         <Alert.Heading>
           <FormattedMessage
               id="exam.startExamInstructions.attention"

@@ -5,7 +5,6 @@ const getCookie = (cookieName) => {
     const cookies = new Cookies();
     return cookies.get(cookieName);
 }
-  
 
 export const transTime = (time) => {
     if(!time) {
@@ -37,10 +36,10 @@ export const transTime = (time) => {
     var splitted = time.split(' ');
     var out = [];
     for(var i = 0; i < splitted.length; i ++) {
-        if(i in transDict) {
-            out.push(transDict[i])
+        if(splitted[i] in transDict) {
+            out.push(transDict[splitted[i]])
         } else {
-            out.push(i);
+            out.push(splitted[i]);
         }
     }
     return out.join(' ');
