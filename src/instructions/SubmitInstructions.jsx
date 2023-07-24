@@ -33,7 +33,7 @@ const SubmitExamInstructions = () => {
           ? <SubmitTimedExamInstructions />
           : <SubmitProctoredExamInstructions />}
         {canContinue && (
-          <Button variant="outline-primary" onClick={continueExam} data-testid="continue-exam-button">
+          <Button variant="outline-primary" className="mr-3 mb-3" onClick={continueExam} data-testid="continue-exam-button">
             <FormattedMessage
               id="exam.SubmitExamInstructions.continueButton"
               defaultMessage="No, I'd like to continue working"

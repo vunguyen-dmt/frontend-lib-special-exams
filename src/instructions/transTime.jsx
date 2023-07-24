@@ -1,5 +1,5 @@
 import { getConfig } from '@edx/frontend-platform';
-
+import Cookies from 'universal-cookie';
 
 const getCookie = (cookieName) => {
     const cookies = new Cookies();

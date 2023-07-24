@@ -27,7 +27,7 @@ const SubmitTimedExamInstructions = () => {
           defaultMessage="After you submit your exam, your exam will be graded."
         />
       </p>
-      <Button variant="primary" onClick={submitExam} className="mr-2" data-testid="end-exam-button">
+      <Button variant="primary" onClick={submitExam} className="mr-3 mb-3" data-testid="end-exam-button">
         <FormattedMessage
           id="exam.submitExamInstructions.submit"
           defaultMessage="Yes, submit my timed exam."
