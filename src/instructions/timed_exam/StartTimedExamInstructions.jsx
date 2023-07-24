@@ -1,12 +1,14 @@
 import React, { useContext } from 'react';
 import { FormattedMessage } from '@edx/frontend-platform/i18n';
-import { Button } from '@edx/paragon';
+import { Button, Alert } from '@edx/paragon';
+import { Info } from '@edx/paragon/icons';
 import ExamStateContext from '../../context';
+import { transTime } from '../transTime';
 
 const StartTimedExamInstructions = () => {
   const state = useContext(ExamStateContext);
   const { exam, startTimedExam } = state;
-  const examDuration = exam.total_time;
+  const examDuration = transTime(exam.total_time);
 
   return (
     <>
@@ -35,6 +37,20 @@ const StartTimedExamInstructions = () => {
           values={{ examDuration }}
         />
       </p>
+      <Alert variant="danger" dismissible icon={Info}>
+        <Alert.Heading>
+          <FormattedMessage
+              id="exam.startExamInstructions.attention"
+              defaultMessage="Attention!"
+            />
+          </Alert.Heading>
+        <p>
+        <FormattedMessage
+              id="exam.startExamInstructions.text4"
+              defaultMessage="You must click the 'Submit' button for each question or group of questions to be scored. Clicking the Save button does NOT count as having submitted an answer."
+            />
+        </p>
+      </Alert>
       <Button
         data-testid="start-exam-button"
         variant="outline-primary"

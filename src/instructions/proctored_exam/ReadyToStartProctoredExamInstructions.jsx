@@ -4,6 +4,7 @@ import { getConfig } from '@edx/frontend-platform';
 import { Button, Container, Spinner } from '@edx/paragon';
 import ExamStateContext from '../../context';
 import Footer from './Footer';
+import transTime from '../transTime';
 
 const ReadyToStartProctoredExamInstructions = () => {
   const state = useContext(ExamStateContext);
@@ -13,7 +14,7 @@ const ReadyToStartProctoredExamInstructions = () => {
     startProctoredExam,
   } = state;
   const { attempt, reviewPolicy } = exam;
-  const examDuration = attempt.total_time ? attempt.total_time : exam.total_time;
+  const examDuration = attempt.total_time ? transTime(attempt.total_time) : exam.total_time;
   const platformName = getConfig().SITE_NAME;
   const rulesUrl = getConfig().PROCTORED_EXAM_RULES_URL;
   const [beginExamClicked, setBeginExamClicked] = useState(false);

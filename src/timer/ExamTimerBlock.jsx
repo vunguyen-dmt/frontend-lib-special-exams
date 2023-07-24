@@ -73,7 +73,7 @@ const ExamTimerBlock = injectIntl(({
                     {attempt.exam_display_name}
                   </Alert.Link>
                 ),
-                examType: attempt.exam_type,
+                examType: attempt.exam_type === 'a timed exam' ? 'một bài kiểm tra có giới hạn thời gian' : attempt.exam_type,
               }}
             />
             {' '}
