@@ -28,9 +28,10 @@ import {
   setApiError,
   setAllowProctoringOptOut,
 } from './slice';
-import { ExamStatus } from '../constants';
+import { ExamStatus, ExamType, IS_PROCTORED_STATUS } from '../constants';
 import { workerPromiseForEventNames, pingApplication } from './messages/handlers';
 import actionToMessageTypesMap from './messages/constants';
+import { checkAppStatus, notifyStartExam } from './messages/proctorio';
 
 function handleAPIError(error, dispatch) {
   const { message, detail } = error;
@@ -152,7 +153,9 @@ export function startTimedExam() {
       return;
     }
     await updateAttemptAfter(
-      exam.course_id, exam.content_id, createExamAttempt(exam.id, exam.use_legacy_attempt_api),
+      exam.course_id,
+      exam.content_id,
+      createExamAttempt(exam.id, exam.use_legacy_attempt_api),
     )(dispatch);
   };
 }
@@ -165,7 +168,9 @@ export function createProctoredExamAttempt() {
       return;
     }
     await updateAttemptAfter(
-      exam.course_id, exam.content_id, createExamAttempt(exam.id, exam.use_legacy_attempt_api, false, true),
+      exam.course_id,
+      exam.content_id,
+      createExamAttempt(exam.id, exam.use_legacy_attempt_api, false, true),
     )(dispatch);
   };
 }
@@ -183,6 +188,7 @@ export function startProctoredExam() {
     }
     const { desktop_application_js_url: workerUrl } = attempt || {};
     const useWorker = window.Worker && workerUrl;
+    const examHasLtiProvider = !exam.useLegacyAttemptApi;
 
     if (useWorker) {
       const startExamTimeoutMilliseconds = EXAM_START_TIMEOUT_MILLISECONDS;
@@ -190,7 +196,9 @@ export function startProctoredExam() {
         startExamTimeoutMilliseconds,
         attempt.external_id,
       ).then(() => updateAttemptAfter(
-        exam.course_id, exam.content_id, continueAttempt(attempt.attempt_id, attempt.use_legacy_attempt_api),
+        exam.course_id,
+        exam.content_id,
+        continueAttempt(attempt.attempt_id, attempt.use_legacy_attempt_api),
       )(dispatch))
         .catch(error => {
           const message = error?.message || 'Worker failed to respond.';
@@ -209,8 +217,13 @@ export function startProctoredExam() {
           );
         });
     } else {
+      if (examHasLtiProvider) {
+        notifyStartExam();
+      }
       await updateAttemptAfter(
-        exam.course_id, exam.content_id, continueAttempt(attempt.attempt_id, attempt.use_legacy_attempt_api),
+        exam.course_id,
+        exam.content_id,
+        continueAttempt(attempt.attempt_id, attempt.use_legacy_attempt_api),
       )(dispatch);
     }
   };
@@ -227,11 +240,15 @@ export function skipProctoringExam() {
     const useLegacyAttemptApi = exam.use_legacy_attempt_api;
     if (attemptId) {
       await updateAttemptAfter(
-        exam.course_id, exam.content_id, declineAttempt(attemptId, useLegacyAttemptApi),
+        exam.course_id,
+        exam.content_id,
+        declineAttempt(attemptId, useLegacyAttemptApi),
       )(dispatch);
     } else {
       await updateAttemptAfter(
-        exam.course_id, exam.content_id, createExamAttempt(exam.id, true, false, useLegacyAttemptApi),
+        exam.course_id,
+        exam.content_id,
+        createExamAttempt(exam.id, true, false, useLegacyAttemptApi),
       )(dispatch);
     }
   };
@@ -300,9 +317,7 @@ export function stopExam() {
       return;
     }
 
-    await updateAttemptAfter(
-      exam.course_id, exam.content_id, stopAttempt(attemptId, useLegacyAttemptAPI),
-    )(dispatch);
+    await updateAttemptAfter(exam.course_id, exam.content_id, stopAttempt(attemptId, useLegacyAttemptAPI))(dispatch);
   };
 }
 
@@ -320,7 +335,9 @@ export function continueExam() {
       return;
     }
     await updateAttemptAfter(
-      exam.course_id, exam.content_id, continueAttempt(attemptId, useLegacyAttemptAPI),
+      exam.course_id,
+      exam.content_id,
+      continueAttempt(attemptId, useLegacyAttemptAPI),
     )(dispatch);
   };
 }
@@ -338,9 +355,7 @@ export function resetExam() {
       );
       return;
     }
-    await updateAttemptAfter(
-      exam.course_id, exam.content_id, resetAttempt(attemptId, useLegacyAttemptAPI),
-    )(dispatch);
+    await updateAttemptAfter(exam.course_id, exam.content_id, resetAttempt(attemptId, useLegacyAttemptAPI))(dispatch);
   };
 }
 
@@ -414,7 +429,9 @@ export function expireExam() {
 
     // this sure looks like a bug
     await updateAttemptAfter(
-      activeAttempt.course_id, exam.content_id, submitAttempt(attemptId, useLegacyAttemptAPI),
+      activeAttempt.course_id,
+      exam.content_id,
+      submitAttempt(attemptId, useLegacyAttemptAPI),
     )(dispatch);
     dispatch(expireExamAttempt());
 
@@ -453,9 +470,10 @@ export function pingAttempt(timeoutInSeconds, workerUrl) {
             examId: exam.id,
           },
         );
+
+        // eslint-disable-next-line function-paren-newline
         await updateAttemptAfter(
-          exam.course_id, exam.content_id, endExamWithFailure(activeAttempt.attempt_id, message),
-        )(dispatch);
+          exam.course_id, exam.content_id, endExamWithFailure(activeAttempt.attempt_id, message))(dispatch);
       });
   };
 }
@@ -474,7 +492,9 @@ export function startProctoringSoftwareDownload() {
       return;
     }
     await updateAttemptAfter(
-      exam.course_id, exam.content_id, softwareDownloadAttempt(attemptId, useLegacyAttemptAPI),
+      exam.course_id,
+      exam.content_id,
+      softwareDownloadAttempt(attemptId, useLegacyAttemptAPI),
     )(dispatch);
   };
 }
@@ -502,5 +522,38 @@ export function getExamReviewPolicy() {
 export function getAllowProctoringOptOut(allowProctoringOptOut) {
   return (dispatch) => {
     dispatch(setAllowProctoringOptOut({ allowProctoringOptOut }));
+  };
+}
+
+/**
+ * Check if we are allowed to enter an exam where proctoring has started.
+ * There is no support for reentry with LTI. The exam must be completed
+ * in the proctored window. If a non-proctored window is opened, the exam will
+ * be ended with an error.
+ *
+ * This check is necessary to prevent using a second browser to access the exam
+ * content unproctored.
+ */
+export function checkExamEntry() {
+  return async (dispatch, getState) => {
+    const { exam } = getState().examState;
+    // Check only applies to LTI exams
+    if (
+      !exam?.attempt
+      || exam.attempt.exam_type !== ExamType.PROCTORED
+      || exam.attempt.use_legacy_attempt_api
+    ) { return; }
+
+    if (IS_PROCTORED_STATUS(exam.attempt.attempt_status)) {
+      Promise.race([
+        checkAppStatus(),
+        new Promise((resolve, reject) => {
+          setTimeout(() => reject(), EXAM_START_TIMEOUT_MILLISECONDS);
+        }),
+      ]).catch(() => {
+        dispatch(setApiError({ errorMsg: 'Something has gone wrong with your exam. Proctoring application not detected.' }));
+        updateAttemptAfter(exam.course_id, exam.content_id, endExamWithFailure(exam.attempt.attempt_id, 'exam reentry disallowed'))(dispatch);
+      });
+    }
   };
 }

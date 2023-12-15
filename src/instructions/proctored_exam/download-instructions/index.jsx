@@ -50,20 +50,23 @@ const DownloadSoftwareProctoredExamInstructions = ({ intl, skipProctoredExam }) 
     ? `${getConfig().EXAMS_BASE_URL}/lti/start_proctoring/${attemptId}` : downloadUrl;
 
   const handleDownloadClick = () => {
-    pollExamAttempt(`${pollUrl}?sourceid=instructions`)
+    pollExamAttempt(pollUrl, sequenceId)
       .then((data) => {
         if (data.status === ExamStatus.READY_TO_START) {
           setSystemCheckStatus('success');
         } else {
-          softwareDownloadAttempt(attemptId);
-          window.open(launchSoftwareUrl, '_blank');
+          // TODO: This call circumvents the thunk for startProctoringSoftwareDownload
+          // which is a bit odd and would handle useLegacyAttempt for us.
+          // There's an opportunity to refactor and clean this up a bit.
+          softwareDownloadAttempt(attemptId, useLegacyAttemptApi);
+          window.location.assign(launchSoftwareUrl);
         }
       });
     setDownloadClicked(true);
   };
 
   const handleStartExamClick = () => {
-    pollExamAttempt(`${pollUrl}?sourceid=instructions`)
+    pollExamAttempt(pollUrl, sequenceId)
       .then((data) => (
         data.status === ExamStatus.READY_TO_START
           ? getExamAttemptsData(courseId, sequenceId)

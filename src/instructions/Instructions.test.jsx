@@ -4,7 +4,7 @@ import React from 'react';
 import { fireEvent, waitFor } from '@testing-library/dom';
 import Instructions from './index';
 import { store, getExamAttemptsData, startTimedExam } from '../data';
-import { pollExamAttempt } from '../data/api';
+import { pollExamAttempt, softwareDownloadAttempt } from '../data/api';
 import { continueExam, submitExam } from '../data/thunks';
 import Emitter from '../data/emitter';
 import { TIMER_REACHED_NULL } from '../timer/events';
@@ -611,7 +611,8 @@ describe('SequenceExamWrapper', () => {
   });
 
   [ExamType.PROCTORED, ExamType.TIMED].forEach((examType) => {
-    it.each(INCOMPLETE_STATUSES)(`Shows expired page when exam is ${examType} and has passed due date and attempt is in %s status`,
+    it.each(INCOMPLETE_STATUSES)(
+      `Shows expired page when exam is ${examType} and has passed due date and attempt is in %s status`,
       (item) => {
         store.getState = () => ({
           examState: Factory.build('examState', {
@@ -638,7 +639,8 @@ describe('SequenceExamWrapper', () => {
         );
 
         expect(screen.getByText('The due date for this exam has passed')).toBeInTheDocument();
-      });
+      },
+    );
   });
 
   it('Shows exam content for timed exam if attempt status is submitted, due date has passed and hide after due is set to false', () => {
@@ -791,8 +793,12 @@ describe('SequenceExamWrapper', () => {
   });
 
   it('Initiates an LTI launch in a new window when the user clicks the System Check button', async () => {
-    const windowSpy = jest.spyOn(window, 'open');
-    windowSpy.mockImplementation(() => ({}));
+    const { location } = window;
+    delete window.location;
+    const mockAssign = jest.fn();
+    window.location = {
+      assign: mockAssign,
+    };
     store.getState = () => ({
       examState: Factory.build('examState', {
         activeAttempt: {},
@@ -807,6 +813,7 @@ describe('SequenceExamWrapper', () => {
           attempt: Factory.build('attempt', {
             attempt_id: 4321,
             attempt_status: ExamStatus.CREATED,
+            use_legacy_attempt_api: false,
           }),
         }),
         getExamAttemptsData,
@@ -822,12 +829,16 @@ describe('SequenceExamWrapper', () => {
       { store },
     );
     fireEvent.click(screen.getByText('Start System Check'));
-    await waitFor(() => { expect(windowSpy).toHaveBeenCalledWith('http://localhost:18740/lti/start_proctoring/4321', '_blank'); });
+    await waitFor(() => { expect(mockAssign).toHaveBeenCalledWith('http://localhost:18740/lti/start_proctoring/4321'); });
+    expect(softwareDownloadAttempt).toHaveBeenCalledWith(4321, false);
 
     // also validate start button works
     pollExamAttempt.mockReturnValue(Promise.resolve({ status: ExamStatus.READY_TO_START }));
     fireEvent.click(screen.getByText('Start Exam'));
     await waitFor(() => { expect(getExamAttemptsData).toHaveBeenCalled(); });
+
+    // restore window.location
+    window.location = location;
   });
 
   it('Shows correct download instructions for legacy rest provider if attempt status is created', () => {

@@ -21,6 +21,7 @@ const ReadyToStartProctoredExamInstructions = () => {
 
   useEffect(() => {
     getExamReviewPolicy();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleStart = () => {
@@ -41,7 +42,7 @@ const ReadyToStartProctoredExamInstructions = () => {
           <li data-testid="duration-text">
             <FormattedMessage
               id="exam.ReadyToStartProctoredExamInstructions.text1"
-              defaultMessage={'You have {examDuration} to complete this exam.'}
+              defaultMessage="You have {examDuration} to complete this exam."
               values={{ examDuration }}
             />
           </li>
@@ -92,7 +93,7 @@ const ReadyToStartProctoredExamInstructions = () => {
           >
             <FormattedMessage
               id="exam.ReadyToStartProctoredExamInstructions.rulesLink"
-              defaultMessage={'{platformName} Rules for Online Proctored Exams'}
+              defaultMessage="{platformName} Rules for Online Proctored Exams"
               values={{ platformName }}
             />
           </Button>

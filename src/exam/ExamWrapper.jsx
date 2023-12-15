@@ -17,13 +17,19 @@ const ExamWrapper = ({ children, ...props }) => {
     originalUserIsStaff,
     canAccessProctoredExams,
   } = props;
-  const { getExamAttemptsData, getAllowProctoringOptOut } = state;
+  const { getExamAttemptsData, getAllowProctoringOptOut, checkExamEntry } = state;
   const loadInitialData = async () => {
     await getExamAttemptsData(courseId, sequence.id);
     await getAllowProctoringOptOut(sequence.allowProctoringOptOut);
+    await checkExamEntry();
   };
 
   const isGated = sequence && sequence.gatedContent !== undefined && sequence.gatedContent.gated;
+
+  useEffect(() => {
+    loadInitialData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // if the user is browsing public content (not logged in) they cannot be in an exam
   // if the user is staff they may view exam content without an exam attempt
@@ -31,10 +37,6 @@ const ExamWrapper = ({ children, ...props }) => {
   if (!authenticatedUser || isStaff) {
     return children;
   }
-
-  useEffect(() => {
-    loadInitialData();
-  }, []);
 
   return (
     <Exam
